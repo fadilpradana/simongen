@@ -300,7 +300,7 @@ export default function App() {
 
             <button
               onClick={() => setShowChart(true)}
-              className="mt-6 sm:mt-8 px-5 py-3 sm:px-7 sm:py-4 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-semibold transition-colors duration-300"
+              className="mt-6 sm:mt-8 px-5 py-3 sm:px-7 sm:py-4 bg-gray-600 hover:bg-gray-700 rounded-lg text-white font-semibold transition-colors duration-300"
             >
               Lihat Grafik
             </button>
