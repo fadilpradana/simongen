@@ -14,8 +14,27 @@ import { motion, AnimatePresence } from "framer-motion";
 import "../index.css";
 
 function WelcomeText({ onComplete }) {
-  const text = "Selamat Datang di Sistem Monitoring Genset Taruna!";
-  const letters = text.split("");
+  const fullText = "Selamat Datang di Sistem Monitoring Genset Taruna!";
+  const [lines, setLines] = useState([fullText]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const isMobile = window.innerWidth <= 640;
+      if (isMobile) {
+        const words = fullText.split(" ");
+        const mid = Math.ceil(words.length / 2);
+        const firstLine = words.slice(0, mid).join(" ");
+        const secondLine = words.slice(mid).join(" ");
+        setLines([firstLine, secondLine]);
+      } else {
+        setLines([fullText]);
+      }
+    };
+
+    handleResize(); // initial check
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const container = {
     hidden: { opacity: 0 },
@@ -51,25 +70,32 @@ function WelcomeText({ onComplete }) {
         mx-auto
         text-center
         leading-snug
+        text-lg
+        sm:text-2xl
+        font-semibold
+        tracking-tight
         text-white
         dark:text-white
-        text-[5vw] sm:text-2xl font-semibold sm:font-bold
-        tracking-tight sm:tracking-normal
-        break-words sm:whitespace-nowrap
       "
       variants={container}
       initial="hidden"
       animate="visible"
       exit="exit"
     >
-      {letters.map((char, index) => (
-        <motion.span key={index} variants={letter}>
-          {char === " " ? "\u00A0" : char}
-        </motion.span>
+      {lines.map((line, idx) => (
+        <div key={idx} className="inline-block">
+          {line.split("").map((char, index) => (
+            <motion.span key={index} variants={letter}>
+              {char === " " ? "\u00A0" : char}
+            </motion.span>
+          ))}
+          <br />
+        </div>
       ))}
     </motion.div>
   );
 }
+
 
 export default function App() {
   const [data, setData] = useState([]);
