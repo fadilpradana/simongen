@@ -50,18 +50,13 @@ function WelcomeText({ onComplete }) {
         max-w-xl
         mx-auto
         text-center
-        break-words
         leading-snug
-        sm:leading-normal
-        text-lg
-        sm:text-2xl
-        font-semibold
-        sm:font-bold
-        tracking-tight
-        sm:tracking-normal
         text-white
         dark:text-white
-        "
+        text-[5vw] sm:text-2xl font-semibold sm:font-bold
+        tracking-tight sm:tracking-normal
+        break-words sm:whitespace-nowrap
+      "
       variants={container}
       initial="hidden"
       animate="visible"
@@ -267,7 +262,6 @@ export default function App() {
               Sistem Monitoring Tegangan Genset
             </h1>
 
-            {/* Layout flex-wrap untuk responsif */}
             <div className="flex flex-wrap justify-center gap-4 sm:gap-10 mb-6 max-w-4xl w-full">
               {voltageCircle("R", teg_r, arus_r)}
               {voltageCircle("S", teg_s, arus_s)}
