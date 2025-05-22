@@ -44,7 +44,24 @@ function WelcomeText({ onComplete }) {
 
   return (
     <motion.div
-      className="text-2xl sm:text-3xl font-bold text-center select-none px-4"
+      className="
+        select-none
+        px-4
+        max-w-xl
+        mx-auto
+        text-center
+        break-words
+        leading-snug
+        sm:leading-normal
+        text-lg
+        sm:text-2xl
+        font-semibold
+        sm:font-bold
+        tracking-tight
+        sm:tracking-normal
+        text-white
+        dark:text-white
+        "
       variants={container}
       initial="hidden"
       animate="visible"
@@ -322,9 +339,10 @@ export default function App() {
                 </LineChart>
               </ResponsiveContainer>
             </div>
+
             <button
               onClick={() => setShowChart(false)}
-              className="mt-6 px-5 py-3 bg-red-600 hover:bg-red-700 rounded-lg text-white font-semibold transition-colors duration-300"
+              className="mt-6 sm:mt-8 px-5 py-3 sm:px-7 sm:py-4 bg-gray-600 hover:bg-gray-700 rounded-lg text-white font-semibold transition-colors duration-300"
             >
               Kembali
             </button>
