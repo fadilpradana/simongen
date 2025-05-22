@@ -302,7 +302,7 @@ export default function App() {
               onClick={() => setShowChart(true)}
               className="mt-6 sm:mt-8 px-5 py-3 sm:px-7 sm:py-4 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-semibold transition-colors duration-300"
             >
-              Lihat Grafik Tegangan
+              Lihat Grafik
             </button>
           </motion.div>
         ) : (
@@ -315,7 +315,7 @@ export default function App() {
             className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-8"
           >
             <h2 className="text-xl sm:text-2xl font-bold mb-6 text-center">
-              Grafik Tegangan 3 Fasa
+              Grafik Monitoring Tegangan Genset
             </h2>
             <div className="w-full max-w-4xl h-72 sm:h-96">
               <ResponsiveContainer width="100%" height="100%">
