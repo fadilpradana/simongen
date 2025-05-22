@@ -31,7 +31,7 @@ function WelcomeText({ onComplete }) {
       }
     };
 
-    handleResize(); // initial check
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -95,7 +95,6 @@ function WelcomeText({ onComplete }) {
     </motion.div>
   );
 }
-
 
 export default function App() {
   const [data, setData] = useState([]);
@@ -230,7 +229,6 @@ export default function App() {
         darkMode ? "bg-black text-white" : "bg-white text-black"
       } min-h-screen`}
     >
-      {/* Logo dan tombol */}
       <div className="fixed top-4 left-4 z-50 flex items-center gap-3 sm:gap-4">
         <div className="relative w-8 h-8 sm:w-10 sm:h-10">
           <img
