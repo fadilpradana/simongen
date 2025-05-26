@@ -132,3 +132,41 @@ body {
     border-width: 4px !important;
   }
 }
+
+/* Tombol primary (untuk grafik, radar, dsb) */
+.btn-primary {
+  background-color: #2563eb; /* blue-600 */
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  transition: background-color 0.3s;
+  cursor: pointer;
+  user-select: none;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-primary:hover {
+  background-color: #1e40af; /* blue-800 */
+}
+
+/* Tombol secondary (misalnya tombol kembali) */
+.btn-secondary {
+  background-color: #6b7280; /* gray-500 */
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  transition: background-color 0.3s;
+  cursor: pointer;
+  user-select: none;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-secondary:hover {
+  background-color: #4b5563; /* gray-700 */
+}
