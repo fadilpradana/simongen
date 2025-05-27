@@ -15,7 +15,7 @@ function App() {
         path="/"
         element={
           isLoggedIn ? (
-            <Navigate to="/dashboard" />
+            <Navigate to="/genset" />
           ) : (
             <Login
               darkMode={darkMode}
@@ -28,7 +28,7 @@ function App() {
 
       {/* Route untuk halaman dashboard genset */}
       <Route
-        path="/dashboard"
+        path="/genset"
         element={
           isLoggedIn ? (
             <Dashboard
@@ -44,7 +44,7 @@ function App() {
 
       {/* Route untuk halaman monitoring radar BITE */}
       <Route
-        path="/monitoring-radar"
+        path="/radar"
         element={
           isLoggedIn ? (
             <MonitoringRadar

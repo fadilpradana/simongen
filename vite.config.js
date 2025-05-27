@@ -1,10 +1,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
-    historyApiFallback: true, // penting untuk routing
+    host: true,              // agar listen ke semua interface (0.0.0.0)
+    port: 5173,              // port default, bisa diubah kalau perlu
+    historyApiFallback: true // untuk mendukung SPA routing react-router-dom
   },
 })

@@ -15,7 +15,7 @@ export default function Login({ darkMode, setDarkMode, setIsLoggedIn }) {
 
     if (username === validUsername && password === validPassword) {
       setIsLoggedIn(true); // Set status login ke true di parent (App.jsx)
-      navigate("/dashboard");
+      navigate("/genset");
     } else {
       setError("Username atau password salah.");
     }
