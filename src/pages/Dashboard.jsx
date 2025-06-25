@@ -36,6 +36,7 @@ export default function App() {
             teg_s: Number(json.vs),
             teg_t: Number(json.vt),
             solar: Number(json.tangki),
+            genset: Number(json.genset), // Tambahkan genset ke graphData
           },
         ];
         if (newData.length > 20) newData.shift();
@@ -62,7 +63,7 @@ export default function App() {
         darkMode ? "bg-black text-white" : "bg-white text-black"
       } min-h-screen relative transition-colors duration-700`}
     >
-      {/* Logo di kiri atas */}
+      {/* Logo kiri atas */}
       <div className="fixed top-4 left-4 flex items-center gap-3 z-50">
         <div className="relative w-8 h-8 sm:w-10 sm:h-10">
           <img
@@ -89,7 +90,7 @@ export default function App() {
         </div>
       </div>
 
-      {/* Tombol Monitoring Radar + Dark Mode + Logout di kanan atas */}
+      {/* Tombol Radar, Dark Mode, Logout kanan atas */}
       <div className="fixed top-4 right-4 flex gap-2 items-center z-50">
         <button
           onClick={() => navigate("/radar")}
@@ -116,7 +117,7 @@ export default function App() {
 
       <AnimatePresence mode="wait">
         {showChartPage ? (
-          <ChartPage graphData={graphData} setShowChartPage={setShowChartPage} />
+          <ChartPage graphData={graphData} setShowChartPage={setShowChartPage} darkMode={darkMode} />
         ) : (
           <>
             <Header />
@@ -129,6 +130,7 @@ export default function App() {
                 currentData={currentData}
                 setShowChartPage={setShowChartPage}
                 isNormal={isNormal}
+                darkMode={darkMode}
                 navigate={navigate}
               />
             )}
@@ -152,8 +154,25 @@ function Header() {
   );
 }
 
+// Tambahkan prop darkMode ke ChartPage
+function ChartPage({ graphData, setShowChartPage, darkMode }) {
+  // Tambahkan warna stroke yang berbeda untuk genset jika diperlukan
+  const getLineColor = (key) => {
+    if (key === "genset") {
+      return darkMode ? "#ADD8E6" : "#4682B4"; // Warna light blue untuk genset
+    }
+    // Warna default untuk yang lain
+    switch (key) {
+      case "teg_r": return "#8884d8";
+      case "teg_s": return "#82ca9d";
+      case "teg_t": return "#ffc658";
+      case "solar": return "#ff7300";
+      default: return "#cccccc";
+    }
+  };
 
-function ChartPage({ graphData, setShowChartPage }) {
+  const axisTickColor = darkMode ? "#fff" : "#000";
+
   return (
     <motion.main
       key="chart"
@@ -164,43 +183,51 @@ function ChartPage({ graphData, setShowChartPage }) {
       className="flex flex-col items-center justify-start min-h-screen px-4 pt-24 pb-20 gap-6 max-w-5xl mx-auto"
     >
       <h1 className="text-center font-extrabold text-3xl sm:text-4xl mb-6">
-        Grafik Tegangan Genset Soekarno Hatta
+        Grafik Genset Soekarno Hatta
       </h1>
 
-      <div className="w-full h-80 bg-opacity-60 backdrop-blur-md rounded-lg p-4 border border-white dark:border-gray-700">
+      <div className={`w-full h-80 rounded-lg p-4 transition-colors duration-700
+          ${darkMode ? "bg-white/5 border border-white/10" : "bg-gray-100/70 border border-gray-300"}`}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={graphData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="time" />
-            <YAxis />
-            <Tooltip />
+            <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#444" : "#ccc"} />
+            <XAxis dataKey="time" tick={{ fill: axisTickColor }} />
+            <YAxis tick={{ fill: axisTickColor }} />
+            <Tooltip contentStyle={{ backgroundColor: darkMode ? "#333" : "#fff", borderColor: darkMode ? "#555" : "#ddd", color: darkMode ? "#fff" : "#000" }} />
             <Legend />
             <Line
               type="monotone"
               dataKey="teg_r"
-              stroke="#8884d8"
+              stroke={getLineColor("teg_r")}
               name="Tegangan R"
               dot={false}
             />
             <Line
               type="monotone"
               dataKey="teg_s"
-              stroke="#82ca9d"
+              stroke={getLineColor("teg_s")}
               name="Tegangan S"
               dot={false}
             />
             <Line
               type="monotone"
               dataKey="teg_t"
-              stroke="#ffc658"
+              stroke={getLineColor("teg_t")}
               name="Tegangan T"
               dot={false}
             />
             <Line
               type="monotone"
               dataKey="solar"
-              stroke="#ff7300"
+              stroke={getLineColor("solar")}
               name="Solar"
+              dot={false}
+            />
+             <Line
+              type="monotone"
+              dataKey="genset"
+              stroke={getLineColor("genset")} // Menggunakan warna yang berbeda untuk genset
+              name="Backup Fuel"
               dot={false}
             />
           </LineChart>
@@ -217,9 +244,11 @@ function ChartPage({ graphData, setShowChartPage }) {
   );
 }
 
-function HomePage({ currentData, setShowChartPage, isNormal }) {
-  const { vr, vs, vt, tangki, statgenset, statpompa, datetime } = currentData;
-  const batteryLevel = Math.min(Math.max(tangki, 0), 100);
+
+function HomePage({ currentData, setShowChartPage, isNormal, darkMode }) {
+  const { vr, vs, vt, tangki, genset, statgenset, statpompa, datetime } = currentData;
+  const solarLevel = Math.min(Math.max(tangki, 0), 100); // Pastikan antara 0-100
+  const backupFuelLevel = Math.min(Math.max(genset, 0), 100); // Data genset untuk backup fuel
 
   return (
     <motion.main
@@ -230,7 +259,7 @@ function HomePage({ currentData, setShowChartPage, isNormal }) {
       transition={{ duration: 0.6, ease: "easeInOut" }}
       className="flex flex-col items-center justify-start min-h-screen px-4 pb-20 gap-6 max-w-4xl mx-auto"
     >
-      <div className="flex justify-center items-end gap-8 mb-6">
+      <div className="flex justify-center items-end gap-8 mb-6 flex-wrap"> {/* flex-wrap untuk responsif */}
         {["r", "s", "t"].map((phase) => {
           const val = currentData[`v${phase}`];
           return (
@@ -248,7 +277,7 @@ function HomePage({ currentData, setShowChartPage, isNormal }) {
                 bg-opacity-10 backdrop-blur-md cursor-pointer transition-transform duration-300 hover:scale-110`}
               >
                 {val} V
-                <div className="tooltip-popup absolute -top-16 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-3 py-2 rounded-lg shadow-lg z-10 whitespace-nowrap">
+                <div className="tooltip-popup absolute -top-16 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-3 py-2 rounded-lg shadow-lg z-10 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                   <div className="font-semibold mb-1">
                     Tegangan {phase.toUpperCase()}
                   </div>
@@ -262,19 +291,65 @@ function HomePage({ currentData, setShowChartPage, isNormal }) {
 
         {/* Tangki solar visual */}
         <div className="flex flex-col items-center m-2 min-w-[88px]">
-          <div className="relative w-16 h-32 rounded-lg bg-gray-800 overflow-hidden">
+          <div
+            className={`relative group w-16 h-32 rounded-lg overflow-hidden transition-colors duration-700 ${
+              darkMode ? "bg-gray-800" : "bg-gray-200"
+            } cursor-pointer`}
+          >
             <div
               className={`absolute bottom-0 left-0 w-full transition-all duration-500 ${
-                batteryLevel < 20 ? "bg-red-500" : "bg-gray-100"
+                solarLevel < 20 ? "bg-red-500" : darkMode ? "bg-gray-100" : "bg-gray-900"
               }`}
-              style={{ height: `${batteryLevel}%` }}
+              style={{ height: `${solarLevel}%` }}
             />
-            <div className="absolute inset-0 flex items-center justify-center text-black font-bold">
-              {batteryLevel}%
+            <div
+              className={`absolute inset-0 flex items-center justify-center font-bold transition-colors duration-700 ${
+                darkMode ? "text-black" : "text-white"
+              }`}
+            >
+              {solarLevel}L
+            </div>
+
+            {/* Tooltip */}
+            <div className="tooltip-popup absolute -top-16 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-3 py-2 rounded-lg shadow-lg z-10 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+              <div className="font-semibold mb-1">Level Solar Tangki Utama</div>
+              <div>{solarLevel}%</div>
             </div>
           </div>
           <p className="mt-2 font-bold text-md sm:text-lg">Solar</p>
         </div>
+
+        {/* --- VISUAL BACKUP FUEL BARU --- */}
+        <div className="flex flex-col items-center m-2 min-w-[88px]">
+          <div
+            className={`relative group w-16 h-32 rounded-lg overflow-hidden transition-colors duration-700 ${
+              darkMode ? "bg-gray-800" : "bg-gray-200"
+            } cursor-pointer`}
+          >
+            <div
+              className={`absolute bottom-0 left-0 w-full transition-all duration-500 ${
+                backupFuelLevel < 20 ? "bg-red-500" : darkMode ? "bg-gray-100" : "bg-gray-900"
+              }`}
+              style={{ height: `${backupFuelLevel}%` }}
+            />
+            <div
+              className={`absolute inset-0 flex items-center justify-center font-bold transition-colors duration-700 ${
+                darkMode ? "text-black" : "text-white"
+              }`}
+            >
+              {backupFuelLevel}L
+            </div>
+
+            {/* Tooltip */}
+            <div className="tooltip-popup absolute -top-16 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-3 py-2 rounded-lg shadow-lg z-10 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+              <div className="font-semibold mb-1">Level Solar Cadangan</div>
+              <div>{backupFuelLevel}%</div>
+            </div>
+          </div>
+          <p className="mt-2 font-bold text-md sm:text-lg">Cadangan</p> {/* Label untuk Backup Fuel */}
+        </div>
+        {/* --- AKHIR VISUAL BACKUP FUEL --- */}
+
       </div>
 
       {/* Status genset, pompa, waktu */}
@@ -289,19 +364,16 @@ function HomePage({ currentData, setShowChartPage, isNormal }) {
         </span>
         <span>
           <span className="font-semibold">Waktu:</span>{" "}
-          {new Date(datetime).toLocaleString() || "—"}
+          {new Date(datetime).toLocaleString()}
         </span>
       </div>
 
-      {/* Tombol navigasi ke grafik */}
-      <div className="flex justify-center gap-6 w-full max-w-md mx-auto mb-6">
-        <button
-          onClick={() => setShowChartPage(true)}
-          className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold hover:brightness-110 transition"
-        >
-          Lihat Grafik
-        </button>
-      </div>
+      <button
+        onClick={() => setShowChartPage(true)}
+        className="px-6 py-3 rounded-xl font-semibold bg-gradient-to-r from-indigo-500 via-cyan-600 to-blue-600 hover:brightness-110 transition"
+      >
+        Lihat Grafik
+      </button>
     </motion.main>
   );
 }

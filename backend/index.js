@@ -1,126 +1,109 @@
-// server.js
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
-const tunnel = require('tunnel-ssh');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ===== Konfigurasi SSH Radar =====
-const SSH_RADAR = {
+// ==============================
+// Koneksi ke database Radar
+// ==============================
+const radarPool = mysql.createPool({
   host: '172.20.100.100',
-  port: 22,
-  username: 'root',
-  password: 'eecj8389',
-  dstHost: '127.0.0.1',
-  dstPort: 3306,
-  localHost: '127.0.0.1',
-  localPort: 3308
-};
+  port: 3306,
+  user: 'edge',
+  password: 'eecRadar',
+  database: 'EdgeBite',
+  waitForConnections: true,
+  connectionLimit: 10,
+});
 
-// ===== Konfigurasi SSH Genset (opsional jika pakai SSH juga, kalau LAN langsung tanpa tunnel, tidak perlu ini) =====
-// Jika koneksi LAN langsung, kita konek langsung di pool Genset tanpa tunnel
+// ==============================
+// Koneksi ke database Genset
+// ==============================
+const gensetPool = mysql.createPool({
+  host: '192.168.11.201',
+  port: 3306,
+  user: 'teknisi',
+  password: 't3kn1s1!',
+  database: 'radmon',
+  waitForConnections: true,
+  connectionLimit: 10,
+});
 
-let radarPool, gensetPool;
-
-function connectRadarTunnel() {
-  return new Promise((resolve, reject) => {
-    tunnel(SSH_RADAR, (err, server) => {
-      if (err) {
-        console.error('❌ Gagal membuat SSH tunnel radar:', err);
-        return reject(err);
-      }
-      console.log('✅ SSH Tunnel radar aktif');
-
-      radarPool = mysql.createPool({
-        host: SSH_RADAR.localHost,
-        port: SSH_RADAR.localPort,
-        user: 'edge',
-        password: 'eecRadar',
-        database: 'EdgeBite',
-        waitForConnections: true,
-        connectionLimit: 10,
-      });
-
-      radarPool.getConnection((err, connection) => {
-        if (err) {
-          console.error('❌ Gagal konek MySQL radar:', err);
-          return reject(err);
-        }
-        console.log('✅ Koneksi radar MySQL OK');
-        connection.release();
-        resolve();
-      });
-    });
-  });
-}
-
-function connectGensetDB() {
-  return new Promise((resolve, reject) => {
-    gensetPool = mysql.createPool({
-      host: '192.168.11.201',
-      port: 3306,
-      user: 'teknisi',
-      password: 't3kn1s1!',
-      database: 'radmon',
-      waitForConnections: true,
-      connectionLimit: 10,
-    });
-
-    gensetPool.getConnection((err, connection) => {
-      if (err) {
-        console.error('❌ Gagal konek MySQL genset:', err);
-        return reject(err);
-      }
-      console.log('✅ Koneksi genset MySQL OK');
-      connection.release();
-      resolve();
-    });
-  });
-}
-
-// ===== Endpoint test
+// ==============================
+// Endpoint uji koneksi backend
+// ==============================
 app.get('/test', (req, res) => {
   res.json({ message: 'API backend jalan' });
 });
 
-// ===== Endpoint RADAR
+// ==============================
+// Endpoint data terbaru dari Radar
+// ==============================
 app.get('/api/radar/latest', (req, res) => {
-  if (!radarPool) return res.status(500).json({ error: 'Radar DB belum siap' });
-
   radarPool.query('SELECT * FROM ddcbite ORDER BY eid DESC LIMIT 1', (err, results) => {
-    if (err) return res.status(500).json({ error: 'Query radar error' });
+    if (err) return res.status(500).json({ error: 'Query radar error', detail: err.message });
     if (results.length === 0) return res.status(404).json({ error: 'Data radar tidak ditemukan' });
     res.json(results[0]);
   });
 });
 
-// ===== Endpoint GENSET
+// ==============================
+// Endpoint data terbaru dari Genset
+// ==============================
 app.get('/api/genset/latest', (req, res) => {
-  if (!gensetPool) return res.status(500).json({ error: 'Genset DB belum siap' });
-
   gensetPool.query('SELECT * FROM simongen ORDER BY datetime DESC LIMIT 1', (err, results) => {
-    if (err) return res.status(500).json({ error: 'Query genset error' });
+    if (err) return res.status(500).json({ error: 'Query genset error', detail: err.message });
     if (results.length === 0) return res.status(404).json({ error: 'Data genset tidak ditemukan' });
     res.json(results[0]);
   });
 });
 
-// ===== Jalankan server
-async function startServer() {
-  try {
-    await connectRadarTunnel();
-    await connectGensetDB();
+// ==============================
+// Endpoint grafik data radar (rentang waktu)
+// Contoh panggilan: /api/radar/grafik?start=2025-05-25T00:00:00&end=2025-05-28T23:59:59
+// ==============================
+app.get('/api/radar/grafik', (req, res) => {
+  const { start, end } = req.query;
 
-    const PORT = 4000;
-    app.listen(PORT, () => {
-      console.log(`🚀 API backend berjalan di http://localhost:${PORT}`);
-    });
-  } catch (err) {
-    console.error('❌ Server gagal start:', err);
+  if (!start || !end) {
+    return res.status(400).json({ error: 'Parameter "start" dan "end" wajib diisi (format ISO: YYYY-MM-DDTHH:mm:ss)' });
   }
-}
 
-startServer();
+  const query = `
+    SELECT *
+    FROM ddcbite
+    WHERE waktu BETWEEN ? AND ?
+    ORDER BY waktu ASC
+  `;
+
+  radarPool.query(query, [start, end], (err, results) => {
+    if (err) return res.status(500).json({ error: 'Query grafik radar error', detail: err.message });
+    res.json(results);
+  });
+});
+
+// Ambil data radar 1 jam terakhir
+app.get('/api/radar/history', (req, res) => {
+  const limit = parseInt(req.query.limit) || 20; // default 20
+  radarPool.query(
+    `SELECT * FROM ddcbite WHERE time >= NOW() - INTERVAL 1 HOUR ORDER BY time ASC LIMIT ?`,
+    [limit],
+    (err, results) => {
+      if (err) return res.status(500).json({ error: 'Query history error', detail: err.message });
+      res.json(results);
+    }
+  );
+});
+
+
+
+// ==============================
+// Jalankan server
+// ==============================
+const PORT = 4000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 API backend berjalan di http://0.0.0.0:${PORT}`);
+});
